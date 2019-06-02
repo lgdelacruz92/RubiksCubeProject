@@ -1,17 +1,20 @@
-let cubie;
-let a = 0;
+let rubiks;
 function setup() {
 	createCanvas(600, 600, WEBGL);
-	cubie = new Cubie(100, 100, 100, 50);
+	rubiks = new RubiksCube(0, 0, 0, 150);
 }
 
 function draw() {
 	background(0);
-	cubie.draw();
-	cubie.rotateAroundOrigin([
-		[cos(a), -sin(a), 0],
-		[sin(a), cos(a), 0],
-		[0, 0, 1]
-	]);
-	a += 0.01;
+	rotateX(radians(45));
+	rotateY(radians(45));
+	// rotateX(frameCount * 0.01);
+	// rotateY(frameCount * 0.01);
+	rubiks.draw();
+}
+
+
+function keyPressed() {
+  if (keyCode === LEFT_ARROW) {
+	}
 }

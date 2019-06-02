@@ -200,6 +200,10 @@ class RubiksCube {
 				}
 			}
 		}
+		this.backIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+		this.leftIndices = [0, 3, 6, 9, 12, 15, 18, 21, 24];
+		this.a = 0;
+		this.animating = false;
 	}
 
 	draw() {
@@ -207,9 +211,28 @@ class RubiksCube {
 			this.cubies[i].draw();
 		}
 	}
+	
+	animating() {
+		return this.animating;
+	}
 
-	rotateFront(dir) {
+	rotateBack(val) {
+		this.animating = true;
+		let mat = [
+			[cos(radians(this.a)), -sin(radians(this.a)), 0],
+			[sin(radians(this.a)), cos(radians(this.a)), 0],
+			[0, 0, 1]
+		];
+		for (let i = 0; i < this.backIndices.length; i++) {
+			this.cubies[this.backIndices[i]].rotateAroundOrigin(mat);
+		}
 
+	}
+
+	rotate(mat) {
+		for (let i = 0; i < this.cubies.length; i++) {
+			this.cubies[i].rotateAroundOrigin(mat);
+		}
 	}
 }
 
