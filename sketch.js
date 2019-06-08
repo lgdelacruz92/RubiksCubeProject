@@ -19,8 +19,17 @@ function keyPressed() {
 			rubiks.backClockwise();
 		} else if (keyCode === UP_ARROW) {
 			rubiks.leftClockwise();
+		} else if (keyCode === RIGHT_ARROW) {
+			rubiks.backCounterClockwise();
+		} 
+	}
+}
+
+function keyTyped() {
+	if (!rubiks.animating) {
+		if (key === 'd') {
+			rubiks.leftCounterClockwise();
 		}
 	}
-
 }
 

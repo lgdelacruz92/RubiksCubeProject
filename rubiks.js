@@ -243,6 +243,89 @@ class Cubie {
 	}
 }
 
+const Matrix = {
+	rotateX: function(a) {
+		return [
+			[1, 0, 0],
+			[0, cos(radians(a)), -sin(radians(a))],               
+			[0, sin(radians(a)), cos(radians(a))]
+		]
+	},
+	rotateZ: function(a) {
+		return [ 
+			[cos(radians(a)), -sin(radians(a)), 0],
+			[sin(radians(a)), cos(radians(a)), 0],               
+			[0, 0, 1]
+		];
+	},
+	rotateY: function(a) {
+		[cos(radians(a)), 0, sin(radians(a))],
+		[0, 1, 0],               
+		[-sin(radians(a)), 0, cos(radians(a))]
+	}
+}
+
+class RubiksFace {
+	constructor(indices, cubies, matFunc) {
+		this.indices = indices;
+		this.angle = 0;
+		this.cubies = cubies;
+		this.matFunc = matFunc;
+		this.angle = 0;
+	}
+
+	_update() {
+		this.mat = this.matFunc(this.angle);
+		for (let i = 0; i < this.indices.length; i++) {
+			this.cubies[this.indices[i]].rotateAroundOrigin(this.mat);
+		}
+	}
+
+	updateClockwise() {
+		this.addAngle();
+		this._update();
+	}
+
+	updateCounterClockwise() {
+		this.subtractAngle();
+		this._update();
+	}
+
+	subtractAngle() {
+		this.angle -= 1;
+	}
+
+	addAngle() {
+		this.angle += 1;
+	}
+
+	updateFace(rotation) {
+		let multIndices = convertToMultArray(this.indices);
+		rotation(multIndices);
+		let rotatedIndices = [];
+		for (let i = 0; i < 3; i++)  {
+			for (let j = 0; j < 3; j++) {
+				rotatedIndices.push(multIndices[i][j]);
+			}
+		}
+
+		let cubieCopies = [];
+		for (let i = 0; i < this.indices.length; i++) {
+			cubieCopies.push(copyInstance(this.cubies[rotatedIndices[i]]));
+		}
+
+		for (let i = 0; i < rotatedIndices.length; i++) {
+			this.cubies[this.indices[i]] = cubieCopies[i];
+			this.cubies[this.indices[i]].updateCoordinates();
+		}
+		this.angle = 0;
+	}
+
+	finished() {
+		return this.angle % 90 === 0;
+	}
+}
+
 class RubiksCube {
 	constructor(_x, _y, _z,  s) {
 		this.cubies = [];
@@ -261,13 +344,30 @@ class RubiksCube {
 				}
 			}
 		}
-		this.backIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8];
-		this.leftIndices = [0, 3, 6, 9, 12, 15, 18, 21, 24];
+		this.backFace = new RubiksFace(
+			[0, 1, 2, 3, 4, 5, 6, 7, 8], 
+			this.cubies,
+			Matrix.rotateZ
+		);
+		this.leftFace = new RubiksFace(
+			[0, 3, 6, 9, 12, 15, 18, 21, 24],
+			this.cubies,
+			Matrix.rotateX
+		);
+
 		this.animating = false;
+		this.rotateFrontClockwise = false;
+		this.rotateFrontCounterClockwise = false;
 		this.rotateBackClockwise = false;
+		this.rotateBackCounterClockwise = false;
 		this.rotateLeftClockwise = false;
-		this.backAngle = 0;
-		this.leftAngle = 0;
+		this.rotateLeftCounterClockwise = false;
+		this.rotateRightClockwise = false;
+		this.rotateRightCounterClockwise = false;
+		this.rotateUpClockwise = false;
+		this.rotateUpCounterClockwise = false;
+		this.rotateDownClockwise = false;
+		this.rotateDownCounterClockwise = false;
 	}
 
 	draw() {
@@ -275,91 +375,102 @@ class RubiksCube {
 			this.cubies[i].draw();
 		}
 	}
+
+	frontClockwise() {
+		this.rotateFrontClocwise = true;
+	}
+
+	frontCounterClockwise() {
+		this.rotateFrontCounterClockwise = true;
+	}
 	
 	backClockwise() {
 		this.rotateBackClockwise = true;
+	}
+
+	backCounterClockwise() {
+		this.rotateBackCounterClockwise = true;
 	}
 
 	leftClockwise() {
 		this.rotateLeftClockwise = true;
 	}
 
-	update() {
+	leftCounterClockwise() {
+		this.rotateLeftCounterClockwise = true;
+	}
+
+	rightClockwise() {
+		this.rotateRightClockwise = true;
+	}
+
+	rightCounterClockwise() {
+		this.rotateRightCounterClockwise = true;
+	}
+
+	upClockwise() {
+		this.rotateUpClockwise = true;
+	}
+
+	upCounterClockwise() {
+		this.rotateUpCounterClockwise = true;
+	}
+
+	downClockwise() {
+		this.rotateDownClockwise = true;
+	}
+
+	downCounterClockwise() {
+		this.rotateDownCounterClockwise = true;
+	}
+
+	_backUpdate() {
 		if (this.rotateBackClockwise) {
-			this.backAngle += 1;
 			this.animating = true;
-			let mat = [
-				[cos(radians(this.backAngle)), -sin(radians(this.backAngle)), 0],
-				[sin(radians(this.backAngle)), cos(radians(this.backAngle)), 0],               
-				[0, 0, 1]
-			];
-			for (let i = 0; i < this.backIndices.length; i++) {
-				this.cubies[this.backIndices[i]].rotateAroundOrigin(mat);
-			}
-			if (this.backAngle % 90 === 0) {
-				let newBackIndices = convertToMultArray(this.backIndices);
-				rotateClockwise(newBackIndices);
-				let rotatedIndices = [];
-				for (let i = 0; i < 3; i++) {
-					for (let j = 0; j < 3; j++) {
-						rotatedIndices.push(newBackIndices[i][j]);
-					}
-				}
-
-				let cubieCopies = [];
-				for (let i = 0; i < this.backIndices.length; i++) {
-					cubieCopies.push(copyInstance(this.cubies[rotatedIndices[i]]));
-				}
-
-				for (let i = 0; i < rotatedIndices.length; i++) {
-					this.cubies[this.backIndices[i]] = cubieCopies[i];
-					this.cubies[this.backIndices[i]].updateCoordinates();
-				}
-				
+			this.backFace.updateClockwise();
+			if (this.backFace.finished()) {
+				this.backFace.updateFace(rotateClockwise);
 				this.rotateBackClockwise = false;
 				this.animating = false;
-				this.backAngle = 0;
 			}
 		}
-		
-		if (this.rotateLeftClockwise) {
-			this.leftAngle += 1;
+
+		if (this.rotateBackCounterClockwise) {
 			this.animating = true;
-			let mat = [
-				[1, 0, 0],
-				[0, cos(radians(this.leftAngle)), -sin(radians(this.leftAngle))],               
-				[0, sin(radians(this.leftAngle)), cos(radians(this.leftAngle))]
-			];
-			for (let i = 0; i < this.leftIndices.length; i++) {
-				this.cubies[this.leftIndices[i]].rotateAroundOrigin(mat);
+			this.backFace.updateCounterClockwise();
+			if (this.backFace.finished()) {
+				this.backFace.updateFace(rotateCounterClockwise);
+				this.rotateBackCounterClockwise = false;
+				this.animating = false;
 			}
-			if (this.leftAngle % 90 === 0) {
-				let newleftIndices = convertToMultArray(this.leftIndices);
-				rotateClockwise(newleftIndices);
-				let rotatedIndices = [];
-				for (let i = 0; i < 3; i++) {
-					for (let j = 0; j < 3; j++) {
-						rotatedIndices.push(newleftIndices[i][j]);
-					}
-				}
+		}
+	}
 
-				let cubieCopies = [];
-				for (let i = 0; i < this.leftIndices.length; i++) {
-					cubieCopies.push(copyInstance(this.cubies[rotatedIndices[i]]));
-				}
-
-				for (let i = 0; i < rotatedIndices.length; i++) {
-
-					this.cubies[this.leftIndices[i]] = cubieCopies[i];
-					this.cubies[this.leftIndices[i]].updateCoordinates();
-				}
-				
+	_leftUpdate() {
+		if (this.rotateLeftClockwise) {
+			this.animating = true;
+			this.leftFace.updateClockwise();
+			if (this.leftFace.finished()) {
+				this.leftFace.updateFace(rotateClockwise);
 				this.rotateLeftClockwise = false;
 				this.animating = false;
-				this.leftAngle = 0;
 			}
 		}
 
+		if (this.rotateLeftCounterClockwise) {
+			this.animating = true;
+			this.leftFace.updateCounterClockwise();
+			if (this.leftFace.finished()) {
+				this.leftFace.updateFace(rotateCounterClockwise);
+				this.rotateLeftCounterClockwise = false;
+				this.animating = false;
+			}
+		}
+	}
+
+	update() {
+		this._backUpdate();
+		this._leftUpdate();
 	}
 }
 
