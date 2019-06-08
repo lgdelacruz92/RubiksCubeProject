@@ -14,10 +14,13 @@ function draw() {
 
 
 function keyPressed() {
-  if (keyCode === LEFT_ARROW) {
-		rubiks.backClockwise();
-	} else if (keyCode === UP_ARROW) {
-		rubiks.leftClockwise();
+	if (!rubiks.animating){
+		if (keyCode === LEFT_ARROW) {
+			rubiks.backClockwise();
+		} else if (keyCode === UP_ARROW) {
+			rubiks.leftClockwise();
+		}
 	}
+
 }
 

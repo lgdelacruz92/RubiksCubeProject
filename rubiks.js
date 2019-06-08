@@ -142,7 +142,6 @@ class Cubie {
 		this.bottomLeftBackO = p5.Vector.add(this.pos, this.bottomLeftBackI);
 		this.bottomRightBackO = p5.Vector.add(this.pos, this.bottomRightBackI);
 
-		this.a = 0.0;
 	}
 
 	rotateAroundOrigin(mat) {
@@ -156,16 +155,15 @@ class Cubie {
 		this.bottomRightBack = multVec(mat, this.bottomRightBackO);
 	}
 
-	rotateAroundInternalAxis(mat) {
-		this.topLeftFrontI = multVec(mat, createVector(-this.s, -this.s, this.s));
-		this.topRightFrontI = multVec(mat, createVector(this.s, -this.s, this.s));
-		this.bottomLeftFrontI = multVec(mat, createVector(-this.s, this.s, this.s));
-		this.bottomRightFrontI = multVec(mat, createVector(this.s, this.s, this.s));
-		this.topLeftBackI = multVec(mat, createVector(-this.s, -this.s, -this.s));
-		this.topRightBackI = multVec(mat, createVector(this.s, -this.s, -this.s));
-		this.bottomLeftBackI = multVec(mat, createVector(-this.s, this.s, -this.s));
-		this.bottomRightBackI = multVec(mat, createVector(this.s, this.s, -this.s));
-		this.update();
+	updateCoordinates() {
+		this.topLeftFrontO = this.topLeftFront;
+		this.topRightFrontO = this.topRightFront;
+		this.bottomLeftFrontO = this.bottomLeftFront;
+		this.bottomRightFrontO = this.bottomRightFront;
+		this.topLeftBackO = this.topLeftBack;
+		this.topRightBackO = this.topRightBack;
+		this.bottomLeftBackO = this.bottomLeftBack;
+		this.bottomRightBackO = this.bottomRightBack;
 	}
 
 	update() {
@@ -268,8 +266,8 @@ class RubiksCube {
 		this.animating = false;
 		this.rotateBackClockwise = false;
 		this.rotateLeftClockwise = false;
-		this.a = 0;
-		this.b = 0;
+		this.backAngle = 0;
+		this.leftAngle = 0;
 	}
 
 	draw() {
@@ -288,16 +286,17 @@ class RubiksCube {
 
 	update() {
 		if (this.rotateBackClockwise) {
+			this.backAngle += 1;
 			this.animating = true;
 			let mat = [
-				[cos(radians(this.a)), -sin(radians(this.a)), 0],
-				[sin(radians(this.a)), cos(radians(this.a)), 0],               
+				[cos(radians(this.backAngle)), -sin(radians(this.backAngle)), 0],
+				[sin(radians(this.backAngle)), cos(radians(this.backAngle)), 0],               
 				[0, 0, 1]
 			];
 			for (let i = 0; i < this.backIndices.length; i++) {
 				this.cubies[this.backIndices[i]].rotateAroundOrigin(mat);
 			}
-			if (this.a % 90 === 0) {
+			if (this.backAngle % 90 === 0) {
 				let newBackIndices = convertToMultArray(this.backIndices);
 				rotateClockwise(newBackIndices);
 				let rotatedIndices = [];
@@ -313,48 +312,52 @@ class RubiksCube {
 				}
 
 				for (let i = 0; i < rotatedIndices.length; i++) {
-					this.cubies[i] = cubieCopies[i];
+					this.cubies[this.backIndices[i]] = cubieCopies[i];
+					this.cubies[this.backIndices[i]].updateCoordinates();
 				}
 				
 				this.rotateBackClockwise = false;
 				this.animating = false;
+				this.backAngle = 0;
 			}
-			this.a += 1;
 		}
 		
 		if (this.rotateLeftClockwise) {
+			this.leftAngle += 1;
 			this.animating = true;
 			let mat = [
 				[1, 0, 0],
-				[0, cos(radians(this.b)), -sin(radians(this.b))],               
-				[0, sin(radians(this.b)), cos(radians(this.b))]
+				[0, cos(radians(this.leftAngle)), -sin(radians(this.leftAngle))],               
+				[0, sin(radians(this.leftAngle)), cos(radians(this.leftAngle))]
 			];
 			for (let i = 0; i < this.leftIndices.length; i++) {
 				this.cubies[this.leftIndices[i]].rotateAroundOrigin(mat);
 			}
-			if (this.b % 90 === 0) {
-				// let newleftIndices = convertToMultArray(this.leftIndices);
-				// rotateClockwise(newleftIndices);
-				// let rotatedIndices = [];
-				// for (let i = 0; i < 3; i++) {
-				// 	for (let j = 0; j < 3; j++) {
-				// 		rotatedIndices.push(newleftIndices[i][j]);
-				// 	}
-				// }
+			if (this.leftAngle % 90 === 0) {
+				let newleftIndices = convertToMultArray(this.leftIndices);
+				rotateClockwise(newleftIndices);
+				let rotatedIndices = [];
+				for (let i = 0; i < 3; i++) {
+					for (let j = 0; j < 3; j++) {
+						rotatedIndices.push(newleftIndices[i][j]);
+					}
+				}
 
-				// let cubieCopies = [];
-				// for (let i = 0; i < this.leftIndices.length; i++) {
-				// 	cubieCopies.push(copyInstance(this.cubies[rotatedIndices[i]]));
-				// }
+				let cubieCopies = [];
+				for (let i = 0; i < this.leftIndices.length; i++) {
+					cubieCopies.push(copyInstance(this.cubies[rotatedIndices[i]]));
+				}
 
-				// for (let i = 0; i < rotatedIndices.length; i++) {
-				// 	this.cubies[i] = cubieCopies[i];
-				// }
+				for (let i = 0; i < rotatedIndices.length; i++) {
+
+					this.cubies[this.leftIndices[i]] = cubieCopies[i];
+					this.cubies[this.leftIndices[i]].updateCoordinates();
+				}
 				
 				this.rotateLeftClockwise = false;
 				this.animating = false;
+				this.leftAngle = 0;
 			}
-			this.b += 1;
 		}
 
 	}
