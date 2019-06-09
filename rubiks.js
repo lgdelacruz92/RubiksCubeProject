@@ -259,9 +259,12 @@ const Matrix = {
 		];
 	},
 	rotateY: function(a) {
-		[cos(radians(a)), 0, sin(radians(a))],
-		[0, 1, 0],               
-		[-sin(radians(a)), 0, cos(radians(a))]
+		return [
+			[cos(radians(a)), 0, sin(radians(a))],
+			[0, 1, 0],               
+			[-sin(radians(a)), 0, cos(radians(a))]
+		]
+
 	}
 }
 
@@ -292,11 +295,11 @@ class RubiksFace {
 	}
 
 	subtractAngle() {
-		this.angle -= 1;
+		this.angle -= 2;
 	}
 
 	addAngle() {
-		this.angle += 1;
+		this.angle += 2;
 	}
 
 	updateFace(rotation) {
@@ -344,16 +347,43 @@ class RubiksCube {
 				}
 			}
 		}
+
+		this.frontFace = new RubiksFace(
+			[18, 19, 20, 21, 22, 23, 24, 25, 26],
+			this.cubies,
+			Matrix.rotateZ
+		);
+
 		this.backFace = new RubiksFace(
 			[0, 1, 2, 3, 4, 5, 6, 7, 8], 
 			this.cubies,
 			Matrix.rotateZ
 		);
+
 		this.leftFace = new RubiksFace(
 			[0, 3, 6, 9, 12, 15, 18, 21, 24],
 			this.cubies,
 			Matrix.rotateX
 		);
+
+		this.upFace = new RubiksFace(
+			[0, 1, 2, 9, 10, 11, 18, 19, 20],
+			this.cubies,
+			Matrix.rotateY
+		);
+
+		this.downFace = new RubiksFace(
+			[6, 7, 8, 15, 16, 17, 24, 25, 26],
+			this.cubies,
+			Matrix.rotateY
+		);
+
+		this.rightFace = new RubiksFace(
+			[20, 11, 2, 23, 14, 5, 26, 17, 8],
+			this.cubies,
+			Matrix.rotateX
+		);
+
 
 		this.animating = false;
 		this.rotateFrontClockwise = false;
@@ -377,7 +407,7 @@ class RubiksCube {
 	}
 
 	frontClockwise() {
-		this.rotateFrontClocwise = true;
+		this.rotateFrontClockwise = true;
 	}
 
 	frontCounterClockwise() {
@@ -449,9 +479,9 @@ class RubiksCube {
 	_leftUpdate() {
 		if (this.rotateLeftClockwise) {
 			this.animating = true;
-			this.leftFace.updateClockwise();
+			this.leftFace.updateCounterClockwise();
 			if (this.leftFace.finished()) {
-				this.leftFace.updateFace(rotateClockwise);
+				this.leftFace.updateFace(rotateCounterClockwise);
 				this.rotateLeftClockwise = false;
 				this.animating = false;
 			}
@@ -459,10 +489,98 @@ class RubiksCube {
 
 		if (this.rotateLeftCounterClockwise) {
 			this.animating = true;
-			this.leftFace.updateCounterClockwise();
+			this.leftFace.updateClockwise();
 			if (this.leftFace.finished()) {
-				this.leftFace.updateFace(rotateCounterClockwise);
+				this.leftFace.updateFace(rotateClockwise);
 				this.rotateLeftCounterClockwise = false;
+				this.animating = false;
+			}
+		}
+	}
+
+	_frontUpdate() {
+		if (this.rotateFrontClockwise) {
+			this.animating = true;
+			this.frontFace.updateClockwise();
+			if (this.frontFace.finished()) {
+				this.frontFace.updateFace(rotateClockwise);
+				this.rotateFrontClockwise = false;
+				this.animating = false;
+			}
+		}
+
+		if (this.rotateFrontCounterClockwise) {
+			this.animating = true;
+			this.frontFace.updateCounterClockwise();
+			if (this.frontFace.finished()) {
+				this.frontFace.updateFace(rotateCounterClockwise);
+				this.rotateFrontCounterClockwise = false;
+				this.animating = false;
+			}
+		}
+	}
+
+	_upUpdate() {
+		if (this.rotateUpClockwise) {
+			this.animating = true;
+			this.upFace.updateCounterClockwise();
+			if (this.upFace.finished()) {
+				this.upFace.updateFace(rotateClockwise);
+				this.rotateUpClockwise = false;
+				this.animating = false;
+			}
+		}
+
+		if (this.rotateUpCounterClockwise) {
+			this.animating = true;
+			this.upFace.updateClockwise();
+			if (this.upFace.finished()) {
+				this.upFace.updateFace(rotateCounterClockwise);
+				this.rotateUpCounterClockwise = false;
+				this.animating = false;
+			}
+		}
+	}
+
+	_downUpdate() {
+		if (this.rotateDownClockwise) {
+			this.animating = true;
+			this.downFace.updateClockwise();
+			if (this.downFace.finished()) {
+				this.downFace.updateFace(rotateCounterClockwise);
+				this.rotateDownClockwise = false;
+				this.animating = false;
+			}
+		}
+
+		if (this.rotateDownCounterClockwise) {
+			this.animating = true;
+			this.downFace.updateCounterClockwise();
+			if (this.downFace.finished()) {
+				this.downFace.updateFace(rotateClockwise);
+				this.rotateDownCounterClockwise = false;
+				this.animating = false;
+			}
+		}
+	}
+
+	_rightUpdate() {
+		if (this.rotateRightClockwise) {
+			this.animating = true;
+			this.rightFace.updateClockwise();
+			if (this.rightFace.finished()) {
+				this.rightFace.updateFace(rotateCounterClockwise);
+				this.rotateRightClockwise = false;
+				this.animating = false;
+			}
+		}
+
+		if (this.rotateRightCounterClockwise) {
+			this.animating = true;
+			this.rightFace.updateCounterClockwise();
+			if (this.rightFace.finished()) {
+				this.rightFace.updateFace(rotateClockwise);
+				this.rotateRightCounterClockwise = false;
 				this.animating = false;
 			}
 		}
@@ -471,6 +589,10 @@ class RubiksCube {
 	update() {
 		this._backUpdate();
 		this._leftUpdate();
+		this._frontUpdate();
+		this._upUpdate();
+		this._downUpdate();
+		this._rightUpdate();
 	}
 }
 
