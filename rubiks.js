@@ -61,44 +61,6 @@ function convertToMultArray(indices) {
 	return result;
 }
 
-function swapItems(a, b) {
-	let temp = a;
-	a = b;
-	b = temp;
-	return {a: a, b: b};
-}
-
-function rotateClockwise(multArray) {
-	let w = 2;
-	let result;
-	for (let x = 0; x < w; x++) {
-		result = swapItems(multArray[0][x], multArray[x][w]);
-		multArray[0][x] = result.a;
-		multArray[x][w] = result.b;
-		result = swapItems(multArray[0][x], multArray[w][w - x]);
-		multArray[0][x] = result.a;
-		multArray[w][w - x] = result.b;
-		result = swapItems(multArray[0][x], multArray[w-x][0]);
-		multArray[0][x] = result.a;
-		multArray[w-x][0] = result.b;
-	}
-}
-
-function rotateCounterClockwise(multArray) {
-	let w = 2;
-	let result;
-	for (let x = 0; x < w; x++) {
-		result = swapItems(multArray[x][0], multArray[w][x]);
-		multArray[x][0] = result.a;
-		multArray[w][x] = result.b;
-		result = swapItems(multArray[x][0], multArray[w - x][w]);
-		multArray[x][0] = result.a;
-		multArray[w - x][w] = result.b;
-		result = swapItems(multArray[x][0], multArray[0][w - x]);
-		multArray[x][0] = result.a;
-		multArray[0][w - x] = result.b;
-	}
-}
 
 function copyInstance (original) {
   var copied = Object.assign(
@@ -108,6 +70,34 @@ function copyInstance (original) {
     original
   );
   return copied;
+}
+
+function swapItems(a, b, cubies) {
+	let temp = copyInstance(cubies[a]);
+	cubies[a] = cubies[b];
+	cubies[b] = temp;
+}
+
+function index(x, y, w) {
+	return y * (w + 1) + x;
+}
+
+function rotateClockwise(indices, cubies) {
+	let w = 2;
+	for (let x = 0; x < w; x++) {
+		swapItems(indices[index(x, 0, w)], indices[index(w, x, w)], cubies);
+		swapItems(indices[index(x, 0, w)], indices[index(w - x, w, w)], cubies);
+		swapItems(indices[index(x, 0, w)], indices[index(0, w - x, w)], cubies);
+	}
+}
+
+function rotateCounterClockwise(indices, cubies) {
+	let w = 2;
+	for (let x = 0; x < w; x++) {
+		swapItems(indices[index(0, x, w)], indices[index(x, w, w)], cubies);
+		swapItems(indices[index(0, x, w)], indices[index(w, w - x, w)], cubies);
+		swapItems(indices[index(0, x, w)], indices[index(w - x, 0, w)], cubies);
+	}
 }
 
 
@@ -303,22 +293,8 @@ class RubiksFace {
 	}
 
 	updateFace(rotation) {
-		let multIndices = convertToMultArray(this.indices);
-		rotation(multIndices);
-		let rotatedIndices = [];
-		for (let i = 0; i < 3; i++)  {
-			for (let j = 0; j < 3; j++) {
-				rotatedIndices.push(multIndices[i][j]);
-			}
-		}
-
-		let cubieCopies = [];
+		rotation(this.indices, this.cubies);
 		for (let i = 0; i < this.indices.length; i++) {
-			cubieCopies.push(copyInstance(this.cubies[rotatedIndices[i]]));
-		}
-
-		for (let i = 0; i < rotatedIndices.length; i++) {
-			this.cubies[this.indices[i]] = cubieCopies[i];
 			this.cubies[this.indices[i]].updateCoordinates();
 		}
 		this.angle = 0;
@@ -569,7 +545,7 @@ class RubiksCube {
 			this.animating = true;
 			this.rightFace.updateClockwise();
 			if (this.rightFace.finished()) {
-				this.rightFace.updateFace(rotateCounterClockwise);
+				this.rightFace.updateFace(rotateClockwise);
 				this.rotateRightClockwise = false;
 				this.animating = false;
 			}
@@ -579,7 +555,7 @@ class RubiksCube {
 			this.animating = true;
 			this.rightFace.updateCounterClockwise();
 			if (this.rightFace.finished()) {
-				this.rightFace.updateFace(rotateClockwise);
+				this.rightFace.updateFace(rotateCounterClockwise);
 				this.rotateRightCounterClockwise = false;
 				this.animating = false;
 			}
